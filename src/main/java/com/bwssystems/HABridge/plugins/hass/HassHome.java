@@ -149,7 +149,10 @@ public class HassHome implements Home {
 			} else {
 					log.debug("calling HomeAssistant: " + hassCommand.getHassName() + " - "
 							+ hassCommand.getEntityId() + " - " + hassCommand.getState() + " - " + hassCommand.getBri());
-					homeAssistant.callCommand(hassCommand);
+					if (!homeAssistant.callCommand(hassCommand)) {
+						theReturn = "[{\"error\":{\"type\":6,\"address\":\"/lights/" + lightId
+								+ "/state\",\"description\":\"Invalid HomeAssistant command; see bridge logs\"}}]";
+					}
 			}
 		}
 		return theReturn;
