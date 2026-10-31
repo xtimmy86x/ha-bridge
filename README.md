@@ -347,6 +347,36 @@ Provide IP Addresses of your HAL Systems that you want to utilize with the bridg
 Provide Client ID and IP Addresses and ports of your MQTT Brokers that you want to utilize with the bridge. Also, you can provide the username and password if you have secured your MQTT broker which is optional. When these Client ID and IP's are given, the bridge will be able to publish MQTT messages by the call it receives and send it to the target MQTT Broker you configure. The MQTT Messages Tab will become available to help you build messages.
 #### Home Assistant Names and IP Addresses
 <Provide IP Addresses and ports of your Home Assistant that you want to utilize with the bridge. Also, give a meaningful name to each one so it is easy to decipher in the helper tab. When these names and IP's are given, the bridge will be able to control the devices or scenes by the call it receives and send it to the target Home Assistant device you configure. 
+#### Home Assistant covers
+
+`HomeAssistant Device` items support `cover.*` entities directly, using the same
+Home Assistant connection and authentication as lights. No scripts or template
+entities are required. Configure these items (replace the entity and connection
+name with your own):
+
+| Item | Target Item JSON |
+| --- | --- |
+| On | `{"entityId":"cover.esp32_sala_armadio","hassName":"HA","state":"on"}` |
+| Off | `{"entityId":"cover.esp32_sala_armadio","hassName":"HA","state":"off"}` |
+| Dim | `{"entityId":"cover.esp32_sala_armadio","hassName":"HA","state":"on","bri":"${intensity.byte}"}` |
+
+On calls `cover.open_cover`; Off calls `cover.close_cover`. Dim calls
+`cover.set_cover_position`, converting `bri` from 0-255 to an integer position
+from 0 (closed) to 100 (open), rounded to the nearest percent. The cover must
+support position control in Home Assistant. In the HomeAssistant Devices helper,
+select **Pass-thru Value** when building a cover with position control. Do not use
+`${intensity.percent}` in `bri`: it is always interpreted on the 0-255 scale.
+
+To stop a cover, configure a HomeAssistant Device item with
+`{"entityId":"cover.esp32_sala_armadio","hassName":"HA","state":"stop"}`.
+For example, create a separate bridge device named "Armadio stop" with this On
+item. The emulated Hue interface has no dedicated cover stop command.
+Off and Stop ignore `bri`. Invalid cover states and invalid, non-finite or
+out-of-range brightness values are rejected without sending a movement command.
+Other Home Assistant domains retain their existing behavior. This controls a
+cover through the emulated Hue light interface; it does not expose a native cover
+or synchronize its position back from Home Assistant.
+
 #### HomeWizard Gateways Names and IP Addresses
 Provide IP Addresses of your HomeWizard Systems that you want to utilize with the bridge. Also, give a meaningful name to each one so it is easy to decipher in the helper tab. When these names and IP's are given, the bridge will be able to control the devices or scenes by the call it receives and send it to the target HomeWizard device you configure. 
 #### Domoticz Names and IP Addresses

@@ -51,7 +51,38 @@ public class HomeAssistant {
 			aUrl = aUrl + domain;
 		String aBody = "{\"entity_id\":\"" + aCommand.getEntityId() + "\"";
 		headers = getAuthHeader();
-		if (aCommand.getState().equalsIgnoreCase("on")) {
+		if (domain.equals("cover")) {
+			String state = aCommand.getState();
+			if ("off".equalsIgnoreCase(state)) {
+				aUrl = aUrl + "/close_cover";
+			} else if ("stop".equalsIgnoreCase(state)) {
+				aUrl = aUrl + "/stop_cover";
+			} else if ("on".equalsIgnoreCase(state)) {
+				if (aCommand.getBri() == null) {
+					aUrl = aUrl + "/open_cover";
+				} else {
+					// Keep the existing Pass-thru Value format (0-255).
+					// Home Assistant cover positions are integer percentages.
+					double brightness;
+					try {
+						brightness = Double.parseDouble(aCommand.getBri());
+					} catch (NumberFormatException e) {
+						log.warn("Invalid cover brightness for {}: {}", aCommand.getEntityId(), aCommand.getBri());
+						return false;
+					}
+					if (!Double.isFinite(brightness) || brightness < 0 || brightness > 255) {
+						log.warn("Cover brightness must be between 0 and 255 for {}", aCommand.getEntityId());
+						return false;
+					}
+					aUrl = aUrl + "/set_cover_position";
+					aBody = aBody + ",\"position\":" + Math.round(brightness * 100 / 255);
+				}
+			} else {
+				log.warn("Unsupported cover command for {}: {}", aCommand.getEntityId(), state);
+				return false;
+			}
+			aBody = aBody + "}";
+		} else if (aCommand.getState().equalsIgnoreCase("on")) {
 			aUrl = aUrl + "/turn_on";
 			if (aCommand.getBri() != null)
 				aBody = aBody + ",\"brightness\":" + aCommand.getBri() + "}";
